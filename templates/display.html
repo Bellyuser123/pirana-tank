@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; } .glow { box-shadow: 0 0 20px rgba(37, 99, 235, 0.3); } .live-dot { animation: p 2s infinite; } @keyframes p { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }</style>
+</head>
+<body class="bg-slate-950 min-h-screen text-white">
+    <div class="bg-slate-900 border-b border-slate-800 py-3 overflow-hidden">
+        <div class="flex items-center px-4">
+            <span class="bg-emerald-600/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold uppercase mr-4">Funded</span>
+            <div id="ticker" class="flex gap-8 text-sm text-slate-400 whitespace-nowrap overflow-hidden">
+                {% for h in funded_history %}<span>{{ h.pitch.startup_name }} • ${{ "{:,.0f}".format(h.amount_spent) }} • {{ h.equity_gained }}%</span>{% endfor %}
+            </div>
+        </div>
+    </div>
+    <main class="max-w-7xl mx-auto px-4 py-12">
+        {% if active_pitch %}
+        <div class="text-center mb-16">
+            <div class="flex justify-center items-center gap-3 mb-6"><span class="live-dot w-4 h-4 bg-red-500 rounded-full"></span><span class="text-slate-400 uppercase font-bold tracking-widest">Live Pitch</span></div>
+            <h1 class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 mb-4" id="startup">{{ active_pitch.startup_name }}</h1>
+            <p class="text-4xl text-blue-400 font-bold mb-8" id="founder">by {{ active_pitch.founder_name }}</p>
+            <div class="bg-slate-900 inline-block rounded-2xl px-12 py-8 border border-slate-800 glow">
+                <div class="text-sm text-slate-400 uppercase tracking-wider mb-2">Asking</div>
+                <div class="text-5xl font-black text-white mb-2" id="ask">${{ "{:,.0f}".format(active_pitch.ask_amount) }} for {{ active_pitch.ask_equity }}%</div>
+                <div class="text-slate-500">Valuation: <span class="text-emerald-400 font-black" id="val">${{ "{:,.0f}".format(calc_valuation(active_pitch.ask_amount, active_pitch.ask_equity)) }}</span></div>
+            </div>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="offers">
+            {% for offer in offers %}
+            <div class="bg-slate-900 rounded-2xl p-8 border border-slate-700 glow">
+                {% if offer.is_merged %}<span class="bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full text-xs font-bold uppercase">Merged</span>{% endif %}
+                <div class="text-3xl font-black text-white mb-2 mt-2">{{ offer.pirana.name }}{% if offer.partner %} & {{ offer.partner.name }}{% endif %}</div>
+                <div class="text-4xl font-black text-blue-400 mb-2">${{ "{:,.0f}".format(offer.amount) }}</div>
+                <div class="text-xl text-slate-400 mb-4">for {{ offer.equity }}%</div>
+                <div class="bg-slate-800/50 rounded-xl px-4 py-3 text-center"><div class="text-xs text-slate-500 uppercase">Valuation</div><div class="text-xl font-black text-emerald-400">${{ "{:,.0f}".format(calc_valuation(offer.amount, offer.equity)) }}</div></div>
+            </div>{% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-32"><h1 class="text-5xl font-black text-slate-600">Waiting for next pitch...</h1></div>
+        {% endif %}
+    </main>
+    <script>
+        setInterval(async()=>{
+            const r=await fetch('/api/display/data'),d=await r.json();
+            if(d.pitch){
+                document.getElementById('startup').textContent=d.pitch.startup;
+                document.getElementById('founder').textContent='by '+d.pitch.founder;
+                document.getElementById('ask').textContent='$'+d.pitch.amt.toLocaleString()+' for '+d.pitch.eq+'%';
+                document.getElementById('val').textContent='$'+d.pitch.val.toLocaleString();
+            }
+            const t=document.getElementById('ticker');
+            if(t&&d.funded.length)t.innerHTML=d.funded.map(f=>`<span>${f.startup} • $${f.amt.toLocaleString()} • ${f.eq}%</span>`).join('');
+            const o=document.getElementById('offers');
+            if(o&&d.offers.length)o.innerHTML=d.offers.map(op=>`<div class="bg-slate-900 rounded-2xl p-8 border border-slate-700 glow">
+                ${op.merged?'<span class="bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full text-xs font-bold uppercase">Merged</span>':''}
+                <div class="text-3xl font-black text-white mb-2 mt-2">${op.name}${op.partner?' & '+op.partner:''}</div>
+                <div class="text-4xl font-black text-blue-400 mb-2">$${op.amt.toLocaleString()}</div>
+                <div class="text-xl text-slate-400 mb-4">for ${op.eq}%</div>
+                <div class="bg-slate-800/50 rounded-xl px-4 py-3 text-center"><div class="text-xs text-slate-500 uppercase">Valuation</div><div class="text-xl font-black text-emerald-400">$${op.val.toLocaleString()}</div></div>
+            </div>`).join('');
+        },2000);
+    </script>
+</body>
+</html>

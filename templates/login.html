@@ -1,1 +1,37 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pirana Tank - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-slate-950 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-slate-900 rounded-2xl p-8 border border-slate-800 shadow-2xl shadow-blue-500/10">
+        <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600 mb-2 text-center">PIRANA TANK</h1>
+        <p class="text-slate-400 text-center mb-8">Live Investment Control System</p>
+        <form method="POST" class="space-y-4">
+            <input type="text" name="name" placeholder="Enter your name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">Enter Tank</button>
+        </form>
+        {% if piranas %}
+        <div class="mt-8 pt-6 border-t border-slate-800">
+            <h3 class="text-sm text-slate-400 mb-3">Quick Select</h3>
+            <div class="grid grid-cols-2 gap-2">
+                {% for p in piranas %}
+                <form method="POST" class="inline"><input type="hidden" name="name" value="{{ p.name }}">
+                    <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-blue-500 rounded-lg px-3 py-2 text-white text-sm transition truncate">{{ p.name }}</button>
+                </form>{% endfor %}
+            </div>
+        </div>{% endif %}
+        <div class="mt-8 pt-6 border-t border-slate-800">
+            <button onclick="document.getElementById('ap').classList.toggle('hidden')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium py-2 rounded-xl text-sm">Admin Login</button>
+            <form id="ap" method="POST" action="/admin/login" class="mt-3 hidden space-y-3">
+                <input type="password" name="pin" placeholder="PIN" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition">Login</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

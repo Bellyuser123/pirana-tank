@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Showrunner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; } .glow { box-shadow: 0 0 15px rgba(37, 99, 235, 0.2); }</style>
+</head>
+<body class="bg-slate-950 min-h-screen text-white">
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-black text-blue-400">PIRANA TANK <span class="text-red-400 text-sm bg-red-900/50 px-2 py-1 rounded ml-2">Showrunner</span></h1>
+            <div class="flex gap-3"><a href="/display" target="_blank" class="bg-slate-800 px-3 py-2 rounded-lg text-sm">Display</a><a href="/" class="text-slate-400">Logout</a></div>
+        </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        <section class="bg-slate-900 rounded-2xl p-8 border border-slate-700 glow">
+            <h2 class="text-2xl font-bold mb-4">Pitch Control</h2>
+            {% if active_pitch %}
+            <div class="bg-slate-800/50 rounded-xl p-6 mb-4 border border-slate-700">
+                <div class="flex gap-3 mb-2"><span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span><span class="text-red-400 font-bold text-sm">LIVE</span></div>
+                <div class="grid md:grid-cols-4 gap-4">
+                    <div><div class="text-xs text-slate-400">Startup</div><div class="text-xl font-bold">{{ active_pitch.startup_name }}</div></div>
+                    <div><div class="text-xs text-slate-400">Founder</div><div class="text-xl font-bold text-blue-400">{{ active_pitch.founder_name }}</div></div>
+                    <div><div class="text-xs text-slate-400">Asking</div><div class="text-xl font-bold">${{ "{:,.0f}".format(active_pitch.ask_amount) }} for {{ active_pitch.ask_equity }}%</div></div>
+                    <div><div class="text-xs text-slate-400">Valuation</div><div class="text-xl font-bold text-emerald-400">${{ "{:,.0f}".format(calc_valuation(active_pitch.ask_amount, active_pitch.ask_equity)) }}</div></div>
+                </div>
+            </div>{% endif %}
+            <form id="pf" class="grid md:grid-cols-4 gap-4 mb-4">
+                <input name="startup_name" placeholder="Startup" required class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none">
+                <input name="founder_name" placeholder="Founder" required class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none">
+                <input type="number" name="ask_amount" step="1000" placeholder="Amount" required class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none">
+                <input type="number" name="ask_equity" step="0.1" placeholder="Equity" required class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none">
+            </form>
+            <button type="submit" onclick="document.getElementById('pf').requestSubmit()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition">Start New Pitch</button>
+        </section>
+        {% if active_pitch %}
+        <section class="bg-slate-900 rounded-2xl p-8 border border-slate-800">
+            <h2 class="text-2xl font-bold mb-6">Live Offers</h2>
+            <div class="space-y-4 mb-6">
+                {% for offer in offers %}
+                <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <div class="font-bold text-lg">{{ offer.pirana.name }}{% if offer.is_merged %} & {{ offer.partner.name }}{% endif %}</div>
+                        {% if offer.is_merged %}<span class="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full">MERGED</span>{% endif %}
+                    </div>
+                    <div class="flex gap-8 text-center">
+                        <div><div class="text-xs text-slate-400">Amount</div><div class="text-xl font-bold">${{ "{:,.0f}".format(offer.amount) }}</div></div>
+                        <div><div class="text-xs text-slate-400">Equity</div><div class="text-xl font-bold text-blue-400">{{ offer.equity }}%</div></div>
+                        <div><div class="text-xs text-slate-400">Valuation</div><div class="text-xl font-bold text-emerald-400">${{ "{:,.0f}".format(calc_valuation(offer.amount, offer.equity)) }}</div></div>
+                    </div>
+                    <button onclick="accept({{ offer.id }})" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition">ACCEPT DEAL</button>
+                </div>{% endfor %}
+            </div>
+            <button onclick="walkout()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl transition">Walk Out (Reject All)</button>
+        </section>
+        {% endif %}
+        <section class="bg-slate-900 rounded-2xl p-8 border border-slate-800">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Piranas</h2>
+                <button onclick="reset()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-xl text-sm">Reset Balances to $1M</button>
+            </div>
+            <div class="grid md:grid-cols-3 gap-4">
+                {% for p in piranas %}<div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700"><div class="font-bold">{{ p.name }}</div><div class="text-emerald-400 font-black text-2xl">${{ "{:,.0f}".format(p.bank_balance) }}</div></div>{% endfor %}
+            </div>
+        </section>
+        {% if history %}
+        <section class="bg-slate-900 rounded-2xl p-8 border border-slate-800">
+            <h2 class="text-2xl font-bold mb-6">History</h2>
+            <table class="w-full"><thead class="bg-slate-800"><tr><th class="px-4 py-2 text-left text-slate-400 text-xs">Startup</th><th class="px-4 py-2 text-left text-slate-400 text-xs">Pirana</th><th class="px-4 py-2 text-left text-slate-400 text-xs">Amount</th><th class="px-4 py-2 text-left text-slate-400 text-xs">Equity</th><th class="px-4 py-2 text-left text-slate-400 text-xs">Result</th></tr></thead>
+            <tbody class="divide-y divide-slate-800">{% for h in history %}
+            <tr><td class="px-4 py-2">{{ h.pitch.startup_name }}</td><td class="px-4 py-2">{{ h.pirana.name }}</td><td class="px-4 py-2">{{ "${:,.0f}".format(h.amount_spent) if h.amount_spent > 0 else "-" }}</td><td class="px-4 py-2">{{ "{:.1f}%".format(h.equity_gained) if h.equity_gained > 0 else "-" }}</td><td class="px-4 py-2"><span class="px-2 py-1 rounded-full text-xs font-bold {% if h.result=='Won' %}bg-emerald-500/20 text-emerald-400{% else %}bg-slate-500/20 text-slate-400{% endif %}">{{ h.result }}</span></td></tr>{% endfor %}</tbody></table>
+        </section>{% endif %}
+    </main>
+    <script>
+        document.getElementById('pf').onsubmit=async e=>{e.preventDefault();await fetch('/api/admin/pitch',{method:'POST',body:new FormData(e.target)});location.reload();};
+        async function accept(id){if(confirm('Accept deal?')){const r=await fetch(`/api/admin/accept/${id}`,{method:'POST'});if((await r.json()).success)location.reload();}}
+        async function walkout(){if(confirm('Walk out?')){await fetch('/api/admin/walk-out',{method:'POST'});location.reload();}}
+        async function reset(){if(confirm('Reset balances?')){await fetch('/api/admin/reset',{method:'POST'});location.reload();}}
+    </script>
+</body>
+</html>
