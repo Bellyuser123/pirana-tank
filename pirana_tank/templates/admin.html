@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Showrunner & Contestant Voice</p>
+        <h1 class="text-3xl font-black text-slate-100">Admin Control Deck</h1>
+    </div>
+    <form method="post" action="{{ url_for('admin_logout') }}">
+        <button class="rounded-xl border border-slate-600 bg-slate-800 px-4 py-2 text-sm text-slate-200 hover:border-slate-500">Logout</button>
+    </form>
+</div>
+
+<div class="mt-6 grid gap-6 xl:grid-cols-3">
+    <div class="space-y-6 xl:col-span-2">
+        <section class="glass-card rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-slate-100">Setup</h2>
+            <p class="mt-1 text-sm text-slate-400">Set/reset starting balances for all Piranas.</p>
+            <form method="post" action="{{ url_for('admin_reset_balances') }}" class="mt-4 flex flex-wrap items-end gap-3">
+                <div class="min-w-[240px]">
+                    <label for="balance_amount" class="text-sm text-slate-300">Starting Balance ($)</label>
+                    <input id="balance_amount" name="amount" type="number" min="1" step="0.01" value="1000000" required
+                           class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-slate-100 outline-none ring-brand-500 focus:ring-2">
+                </div>
+                <button class="rounded-xl bg-brand-600 px-5 py-3 text-sm font-bold text-white hover:bg-brand-500">Apply to All Piranas</button>
+            </form>
+        </section>
+
+        <section class="glass-card rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-slate-100">Pitch Control</h2>
+            <p class="mt-1 text-sm text-slate-400">Start a new pitch and close any previous active one.</p>
+            <form method="post" action="{{ url_for('admin_start_pitch') }}" class="mt-5 grid gap-4 md:grid-cols-2">
+                <div>
+                    <label class="text-sm text-slate-300">Startup Name</label>
+                    <input name="startup_name" type="text" required
+                           class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-slate-100 outline-none ring-brand-500 focus:ring-2">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Founder Name</label>
+                    <input name="founder_name" type="text" required
+                           class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-slate-100 outline-none ring-brand-500 focus:ring-2">
+                </div>
+                <div>
+                    <label for="ask_amount" class="text-sm text-slate-300">Ask Amount ($)</label>
+                    <input id="ask_amount" name="ask_amount" type="number" min="1" step="0.01" required
+                           class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-slate-100 outline-none ring-brand-500 focus:ring-2">
+                </div>
+                <div>
+                    <label for="ask_equity" class="text-sm text-slate-300">Ask Equity (%)</label>
+                    <input id="ask_equity" name="ask_equity" type="number" min="0.01" step="0.01" required
+                           class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-slate-100 outline-none ring-brand-500 focus:ring-2">
+                </div>
+                <div class="md:col-span-2 rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3">
+                    <p class="text-xs uppercase tracking-wider text-slate-400">Implied Ask Valuation</p>
+                    <p id="ask_valuation" class="mt-1 text-2xl font-black text-sky-300">--</p>
+                </div>
+                <div class="md:col-span-2">
+                    <button class="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-500">Start Pitch</button>
+                </div>
+            </form>
+            {% if active_pitch %}
+                <div class="mt-5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+                    Live: {{ active_pitch.startup_name }} ({{ active_pitch.founder_name }}) asking {{ active_pitch.ask_amount|money }} for {{ active_pitch.ask_equity|pct }}.
+                </div>
+            {% else %}
+                <div class="mt-5 rounded-xl border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">No active pitch.</div>
+            {% endif %}
+        </section>
+
+        <section class="glass-card rounded-2xl p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-100">Live Offers Board</h2>
+                    <p class="mt-1 text-sm text-slate-400">Updates every 2 seconds.</p>
+                </div>
+                <form method="post" action="{{ url_for('admin_walkout') }}">
+                    <button {% if not active_pitch %}disabled{% endif %}
+                            class="rounded-xl border border-rose-500/60 bg-rose-500/10 px-4 py-2 text-sm font-bold text-rose-200 hover:bg-rose-500/20 disabled:opacity-50">
+                        Walk Out (Pass All)
+                    </button>
+                </form>
+            </div>
+            <div id="admin-live-offers" class="mt-4" hx-get="{{ url_for('admin_live_offers_panel') }}" hx-trigger="load, every 2s" hx-swap="innerHTML">
+                {% include "partials/admin_live_offers_panel.html" %}
+            </div>
+        </section>
+    </div>
+
+    <aside class="glass-card rounded-2xl p-6">
+        <h2 class="text-xl font-bold text-slate-100">Pirana Balances</h2>
+        <div class="mt-4 space-y-2">
+            {% if piranas %}
+                {% for pirana in piranas %}
+                    <div class="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2">
+                        <span class="font-medium text-slate-200">{{ pirana.name }}</span>
+                        <span class="text-emerald-300">{{ pirana.bank_balance|money }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-slate-400">No Piranas yet.</p>
+            {% endif %}
+        </div>
+    </aside>
+</div>
+{% endblock %}

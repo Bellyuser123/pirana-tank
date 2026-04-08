@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+{% set has_pitch = active_pitch is not none %}
+<div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+        <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Investor Console</p>
+        <h1 class="text-3xl font-black text-slate-100">{{ pirana.name }}</h1>
+    </div>
+    <div class="flex items-center gap-3">
+        <div class="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-100">
+            Bank Balance: <span class="font-bold">{{ pirana.bank_balance|money }}</span>
+        </div>
+        <form method="post" action="{{ url_for('pirana_logout') }}">
+            <button class="rounded-xl border border-slate-600 bg-slate-800 px-4 py-2 text-sm text-slate-200 hover:border-slate-500">Logout</button>
+        </form>
+    </div>
+</div>
+
+<div class="mt-6 grid gap-6 xl:grid-cols-3">
+    <div class="space-y-6 xl:col-span-2">
+        <div id="active-pitch-panel" hx-get="{{ url_for('pirana_active_pitch_panel') }}" hx-trigger="load, every 2s" hx-swap="innerHTML">
+            {% include "partials/pirana_active_pitch_panel.html" %}
+        </div>
+
+        <section class="glass-card rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-slate-100">Action Area</h2>
+            <p class="mt-1 text-sm text-slate-400">Enter amount and equity. Valuation auto-calculates as you type.</p>
+            <form method="post" action="{{ url_for('pirana_submit_or_update_offer') }}" class="mt-5 grid gap-4 md:grid-cols-2">
+                <div>
+                    <label for="offer_amount" class="text-sm text-slate-300">Amount ($)</label>
+                    <input id="offer_amount" name="amount" type="number" min="1" step="0.01" value="{{ own_offer.amount if own_offer else '' }}"
+                           {% if not has_pitch %}disabled{% endif %} required
+                           class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-slate-100 outline-none ring-brand-500 focus:ring-2 disabled:opacity-50">
+                </div>
+                <div>
+                    <label for="offer_equity" class="text-sm text-slate-300">Equity (%)</label>
+                    <input id="offer_equity" name="equity" type="number" min="0.01" step="0.01" value="{{ own_offer.equity if own_offer else '' }}"
+                           {% if not has_pitch %}disabled{% endif %} required
+                           class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-slate-100 outline-none ring-brand-500 focus:ring-2 disabled:opacity-50">
+                </div>
+                <div class="md:col-span-2 rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3">
+                    <p class="text-xs uppercase tracking-wider text-slate-400">Implied Valuation</p>
+                    <p id="offer_valuation" class="mt-1 text-2xl font-black text-sky-300">--</p>
+                </div>
+                <div class="md:col-span-2 flex flex-wrap gap-3">
+                    <button type="submit" {% if not has_pitch %}disabled{% endif %}
+                            class="rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white hover:bg-brand-500 disabled:opacity-50">
+                        Submit Offer
+                    </button>
+                    <button type="submit" name="action" value="update" {% if not has_pitch %}disabled{% endif %}
+                            class="rounded-xl border border-brand-500/60 bg-brand-500/10 px-6 py-3 text-sm font-bold text-brand-200 hover:bg-brand-500/20 disabled:opacity-50">
+                        Update Offer
+                    </button>
+                </div>
+            </form>
+            <form method="post" action="{{ url_for('pirana_withdraw_offer') }}" class="mt-4">
+                <button {% if not has_pitch %}disabled{% endif %}
+                        class="rounded-xl border border-rose-500/60 bg-rose-500/10 px-5 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/20 disabled:opacity-50">
+                    Withdraw
+                </button>
+            </form>
+        </section>
+
+        <section class="glass-card rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-slate-100">Collaboration (Merge)</h2>
+            <p class="mt-1 text-sm text-slate-400">Invite another Pirana to combine offers into one merged bid.</p>
+            <form method="post" action="{{ url_for('pirana_invite_partner') }}" class="mt-4 flex flex-wrap items-end gap-3">
+                <div class="min-w-[260px] flex-1">
+                    <label for="partner_id" class="text-sm text-slate-300">Invite Partner</label>
+                    <select id="partner_id" name="partner_id" {% if not has_pitch or not other_piranas %}disabled{% endif %}
+                            class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-slate-100 outline-none ring-brand-500 focus:ring-2 disabled:opacity-50">
+                        {% for other in other_piranas %}
+                            <option value="{{ other.id }}">{{ other.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button {% if not has_pitch or not other_piranas %}disabled{% endif %}
+                        class="rounded-xl bg-slate-800 px-5 py-3 text-sm font-bold text-slate-100 hover:bg-slate-700 disabled:opacity-50">
+                    Send Invite
+                </button>
+            </form>
+        </section>
+    </div>
+
+    <aside class="glass-card rounded-2xl p-6">
+        <h2 class="text-xl font-bold text-slate-100">History</h2>
+        <p class="mt-1 text-sm text-slate-400">Won, rejected, and passed deals.</p>
+        <div class="mt-4 max-h-[540px] overflow-y-auto rounded-xl border border-slate-800">
+            <table class="w-full text-sm">
+                <thead class="sticky top-0 bg-slate-900/95 text-xs uppercase tracking-wider text-slate-400">
+                    <tr>
+                        <th class="px-3 py-2 text-left">Startup</th>
+                        <th class="px-3 py-2 text-left">Result</th>
+                        <th class="px-3 py-2 text-left">Spent</th>
+                        <th class="px-3 py-2 text-left">Equity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if history_rows %}
+                        {% for row in history_rows %}
+                            <tr class="border-t border-slate-800/80">
+                                <td class="px-3 py-2">{{ row.pitch.startup_name if row.pitch else "N/A" }}</td>
+                                <td class="px-3 py-2">
+                                    {% set tone = "text-slate-200" %}
+                                    {% if row.result == "Won" %}{% set tone = "text-emerald-300" %}{% endif %}
+                                    {% if row.result == "Rejected" %}{% set tone = "text-rose-300" %}{% endif %}
+                                    {% if row.result == "Passed" %}{% set tone = "text-amber-300" %}{% endif %}
+                                    <span class="font-semibold {{ tone }}">{{ row.result }}</span>
+                                </td>
+                                <td class="px-3 py-2">{{ row.amount_spent|money }}</td>
+                                <td class="px-3 py-2">{{ row.equity_gained|pct }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="4" class="px-3 py-4 text-center text-slate-400">No history yet.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </aside>
+</div>
+{% endblock %}

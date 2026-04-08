@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<div id="display-state" hx-get="{{ url_for('audience_state') }}" hx-trigger="load, every 2s" hx-swap="innerHTML">
+    {% include "partials/display_state.html" %}
+</div>
+{% endblock %}

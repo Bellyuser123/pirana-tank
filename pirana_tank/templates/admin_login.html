@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mx-auto mt-10 max-w-xl">
+    <section class="glass-card rounded-3xl p-8">
+        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Showrunner Access</p>
+        <h1 class="mt-2 text-3xl font-black text-slate-100">Admin Control</h1>
+        <form method="post" class="mt-6 space-y-4">
+            <label for="password" class="text-sm text-slate-300">Admin Password</label>
+            <input id="password" name="password" type="password" required
+                   class="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-slate-100 outline-none ring-brand-500 focus:ring-2">
+            <button type="submit" class="w-full rounded-xl bg-brand-600 px-4 py-3 font-bold text-white hover:bg-brand-500">
+                Enter Admin Panel
+            </button>
+        </form>
+        <a href="{{ url_for('login') }}" class="mt-4 inline-flex text-sm text-sky-300 hover:text-sky-200">Back to Investor Login -></a>
+    </section>
+</div>
+{% endblock %}
