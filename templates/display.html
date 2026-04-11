@@ -5,9 +5,72 @@
     <title>Display</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; } .glow { box-shadow: 0 0 20px rgba(37, 99, 235, 0.3); } .live-dot { animation: p 2s infinite; } @keyframes p { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glow { box-shadow: 0 0 20px rgba(37, 99, 235, 0.3); }
+        .live-dot { animation: p 2s infinite; }
+        @keyframes p { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-up { animation: fadeUp .55s ease-out both; }
+        .flash-update { animation: flashUpdate .45s ease-out; }
+        @keyframes flashUpdate { 0% { color: #93c5fd; } 100% { color: inherit; } }
+        @keyframes bgPan {
+            0% { transform: scale(1.08) translate3d(-2%, -1%, 0); }
+            50% { transform: scale(1.12) translate3d(2%, 1%, 0); }
+            100% { transform: scale(1.08) translate3d(-2%, -1%, 0); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: .35; }
+            50% { opacity: .6; }
+        }
+        @keyframes shineSweep {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(140%); }
+        }
+        .cinema-bg {
+            position: fixed;
+            inset: -12%;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, .25), transparent 45%),
+                radial-gradient(circle at 80% 35%, rgba(16, 185, 129, .15), transparent 42%),
+                radial-gradient(circle at 55% 80%, rgba(168, 85, 247, .12), transparent 38%);
+            filter: blur(24px);
+            animation: bgPan 18s ease-in-out infinite;
+        }
+        .cinema-vignette {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(circle at center, transparent 45%, rgba(2, 6, 23, .72) 100%);
+        }
+        .spot-glow { animation: pulseGlow 4s ease-in-out infinite; }
+        .shine {
+            position: relative;
+            overflow: hidden;
+        }
+        .shine::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 45%;
+            height: 100%;
+            background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, .13) 50%, transparent 80%);
+            transform: translateX(-120%);
+            animation: shineSweep 5.5s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .fade-up, .live-dot, .flash-update, .cinema-bg, .spot-glow, .shine::after { animation: none; }
+        }
+    </style>
 </head>
 <body class="bg-slate-950 min-h-screen text-white">
+    <div class="cinema-bg"></div>
+    <div class="cinema-vignette"></div>
+    <div class="relative z-10">
     <div class="bg-slate-900 border-b border-slate-800 py-3 overflow-hidden">
         <div class="flex items-center px-4">
             <span class="bg-emerald-600/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold uppercase mr-4">Funded</span>
@@ -18,19 +81,19 @@
     </div>
     <main class="max-w-7xl mx-auto px-4 py-12">
         {% if active_pitch %}
-        <div class="text-center mb-16">
+        <div class="text-center mb-16 fade-up">
             <div class="flex justify-center items-center gap-3 mb-6"><span class="live-dot w-4 h-4 bg-red-500 rounded-full"></span><span class="text-slate-400 uppercase font-bold tracking-widest">Live Pitch</span></div>
             <h1 class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 mb-4" id="startup">{{ active_pitch.startup_name }}</h1>
             <p class="text-4xl text-blue-400 font-bold mb-8" id="founder">by {{ active_pitch.founder_name }}</p>
-            <div class="bg-slate-900 inline-block rounded-2xl px-12 py-8 border border-slate-800 glow">
+            <div class="bg-slate-900/90 inline-block rounded-2xl px-12 py-8 border border-slate-800 glow spot-glow shine transition duration-300 hover:-translate-y-1">
                 <div class="text-sm text-slate-400 uppercase tracking-wider mb-2">Asking</div>
                 <div class="text-5xl font-black text-white mb-2" id="ask">${{ "{:,.0f}".format(active_pitch.ask_amount) }} for {{ active_pitch.ask_equity }}%</div>
                 <div class="text-slate-500">Valuation: <span class="text-emerald-400 font-black" id="val">${{ "{:,.0f}".format(calc_valuation(active_pitch.ask_amount, active_pitch.ask_equity)) }}</span></div>
             </div>
         </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="offers">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 fade-up" id="offers">
             {% for offer in offers %}
-            <div class="bg-slate-900 rounded-2xl p-8 border border-slate-700 glow">
+            <div class="bg-slate-900/90 rounded-2xl p-8 border border-slate-700 glow shine transition duration-200 hover:-translate-y-1">
                 {% if offer.is_merged %}<span class="bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full text-xs font-bold uppercase">Merged</span>{% endif %}
                 <div class="text-3xl font-black text-white mb-2 mt-2">{{ offer.pirana.name }}{% if offer.partner %} & {{ offer.partner.name }}{% endif %}</div>
                 <div class="text-4xl font-black text-blue-400 mb-2">${{ "{:,.0f}".format(offer.amount) }}</div>
@@ -46,15 +109,17 @@
         setInterval(async()=>{
             const r=await fetch('/api/display/data'),d=await r.json();
             if(d.pitch){
-                document.getElementById('startup').textContent=d.pitch.startup;
-                document.getElementById('founder').textContent='by '+d.pitch.founder;
-                document.getElementById('ask').textContent='$'+d.pitch.amt.toLocaleString()+' for '+d.pitch.eq+'%';
-                document.getElementById('val').textContent='$'+d.pitch.val.toLocaleString();
+                const startup=document.getElementById('startup'),founder=document.getElementById('founder'),ask=document.getElementById('ask'),val=document.getElementById('val');
+                const nextStartup=d.pitch.startup,nextFounder='by '+d.pitch.founder,nextAsk='$'+d.pitch.amt.toLocaleString()+' for '+d.pitch.eq+'%',nextVal='$'+d.pitch.val.toLocaleString();
+                if(startup.textContent!==nextStartup){startup.textContent=nextStartup;startup.classList.add('flash-update');setTimeout(()=>startup.classList.remove('flash-update'),450);}
+                if(founder.textContent!==nextFounder){founder.textContent=nextFounder;}
+                if(ask.textContent!==nextAsk){ask.textContent=nextAsk;ask.classList.add('flash-update');setTimeout(()=>ask.classList.remove('flash-update'),450);}
+                if(val.textContent!==nextVal){val.textContent=nextVal;val.classList.add('flash-update');setTimeout(()=>val.classList.remove('flash-update'),450);}
             }
             const t=document.getElementById('ticker');
             if(t&&d.funded.length)t.innerHTML=d.funded.map(f=>`<span>${f.startup} • $${f.amt.toLocaleString()} • ${f.eq}%</span>`).join('');
             const o=document.getElementById('offers');
-            if(o&&d.offers.length)o.innerHTML=d.offers.map(op=>`<div class="bg-slate-900 rounded-2xl p-8 border border-slate-700 glow">
+            if(o&&d.offers.length)o.innerHTML=d.offers.map(op=>`<div class="bg-slate-900/90 rounded-2xl p-8 border border-slate-700 glow shine transition duration-200 hover:-translate-y-1">
                 ${op.merged?'<span class="bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full text-xs font-bold uppercase">Merged</span>':''}
                 <div class="text-3xl font-black text-white mb-2 mt-2">${op.name}${op.partner?' & '+op.partner:''}</div>
                 <div class="text-4xl font-black text-blue-400 mb-2">$${op.amt.toLocaleString()}</div>
@@ -63,5 +128,6 @@
             </div>`).join('');
         },2000);
     </script>
+    </div>
 </body>
 </html>
