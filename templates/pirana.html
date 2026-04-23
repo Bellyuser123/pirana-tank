@@ -12,75 +12,127 @@
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <h1 class="text-2xl font-black text-blue-400">PIRANA TANK</h1>
             <div class="flex items-center gap-4">
-                <div class="bg-emerald-900/50 border border-emerald-700 rounded-xl px-4 py-2">
-                    <div class="text-xs text-emerald-400 uppercase">Balance</div>
-                    <div class="text-xl font-black text-emerald-400" id="bal">${{ "{:,.0f}".format(pirana.bank_balance) }}</div>
-                </div>
-                <span class="font-bold text-lg">{{ pirana.name }}</span>
-                <a href="/" class="text-slate-400 hover:text-white px-2">Logout</a>
+                <div class="bg-emerald-900/50 border border-emerald-700 rounded-xl px-4 py-2"><div class="text-xs text-emerald-400 uppercase">Balance</div><div class="text-xl font-black text-emerald-400" id="bal">$0</div></div>
+                <span class="font-bold text-lg">{{ pirana.name }}</span><a href="/" class="text-slate-400 hover:text-white px-2">Logout</a>
             </div>
         </div>
     </header>
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+
+        <div id="invites-area"></div>
+
         <section id="pitchArea">
-            {% if active_pitch %}
-            <div class="bg-slate-900 rounded-2xl p-8 border border-slate-700 glow">
-                <div class="flex items-center gap-3 mb-4">
-                    <span class="live-dot w-3 h-3 bg-red-500 rounded-full"></span>
-                    <h2 class="text-lg font-bold text-slate-300 uppercase">Live Pitch</h2>
-                </div>
+            <div class="bg-slate-900 rounded-2xl p-8 border border-slate-700 glow" id="pitch-container" style="display:none;">
+                <div class="flex items-center gap-3 mb-4"><span class="live-dot w-3 h-3 bg-red-500 rounded-full"></span><h2 class="text-lg font-bold text-slate-300 uppercase">Live Pitch</h2></div>
                 <div class="grid md:grid-cols-3 gap-6 mb-6">
-                    <div><div class="text-sm text-slate-400 mb-1">Startup</div><div class="text-3xl font-black text-white" id="startup">{{ active_pitch.startup_name }}</div></div>
-                    <div><div class="text-sm text-slate-400 mb-1">Founder</div><div class="text-2xl font-bold text-blue-400" id="founder">{{ active_pitch.founder_name }}</div></div>
-                    <div><div class="text-sm text-slate-400 mb-1">Asking</div><div class="text-2xl font-bold text-white" id="ask">${{ "{:,.0f}".format(active_pitch.ask_amount) }} for {{ active_pitch.ask_equity }}%</div></div>
+                    <div><div class="text-sm text-slate-400 mb-1">Startup</div><div class="text-3xl font-black text-white" id="startup"></div></div>
+                    <div><div class="text-sm text-slate-400 mb-1">Founder</div><div class="text-2xl font-bold text-blue-400" id="founder"></div></div>
+                    <div><div class="text-sm text-slate-400 mb-1">Asking</div><div class="text-2xl font-bold text-white" id="ask"></div></div>
                 </div>
-                <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                    <form id="offerForm" class="space-y-4">
-                        <div class="grid md:grid-cols-3 gap-4">
-                            <input type="number" id="amt" step="1000" min="1" placeholder="Amount ($)" class="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
-                            <input type="number" id="eq" step="0.1" min="0.1" max="100" placeholder="Equity (%)" class="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
-                            <div id="val" class="bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-blue-400 font-black text-xl flex items-center">$0</div>
-                        </div>
-                        <div class="flex gap-3">
-                            <select id="partner" class="flex-1 bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
-                                <option value="none">Solo</option>
-                                {% for p in other_piranas %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
-                            </select>
-                            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">Submit Offer</button>
-                            <button type="button" id="wd" class="bg-slate-700 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl transition">Withdraw</button>
-                        </div>
-                    </form>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                        <h3 class="font-bold mb-4">Draft New Offer</h3>
+                        <form id="offerForm" class="space-y-4">
+                            <div class="flex gap-4">
+                                <input type="number" id="amt" step="any" min="0" placeholder="Amount ($)" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                                <input type="number" id="eq" step="any" min="0" max="100" placeholder="Equity (%)" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div class="bg-slate-900 border border-slate-700 rounded-xl p-4">
+                                <div class="text-sm text-slate-400 mb-2">Invite Partners (Optional)</div>
+                                <div class="flex flex-wrap gap-3">
+                                    {% for p in other_piranas %}
+                                    <label class="flex items-center space-x-2 bg-slate-800 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-700">
+                                        <input type="checkbox" name="partners" value="{{ p.id }}" class="rounded bg-slate-900 border-slate-600 text-blue-600 focus:ring-blue-600">
+                                        <span class="text-sm">{{ p.name }}</span>
+                                    </label>{% endfor %}
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg">Submit Offer to Board</button>
+                        </form>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold mb-4 text-emerald-400">Your Deals on the Table</h3>
+                        <div id="my-offers" class="space-y-3"></div>
+                    </div>
                 </div>
             </div>
-            {% else %}
-            <div class="bg-slate-900 rounded-2xl p-12 border border-slate-800 text-center"><h2 class="text-2xl font-bold text-slate-400">No Active Pitch</h2></div>
-            {% endif %}
-        </section>
-        <section>
-            <h2 class="text-2xl font-bold text-white mb-4">History</h2>
-            <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
-                <table class="w-full">
-                    <thead class="bg-slate-800"><tr><th class="px-4 py-3 text-left text-slate-400 uppercase text-xs">Startup</th><th class="px-4 py-3 text-left text-slate-400 uppercase text-xs">Amount</th><th class="px-4 py-3 text-left text-slate-400 uppercase text-xs">Equity</th><th class="px-4 py-3 text-left text-slate-400 uppercase text-xs">Result</th></tr></thead>
-                    <tbody class="divide-y divide-slate-800">
-                        {% for h in history %}
-                        <tr>
-                            <td class="px-4 py-3 font-medium">{{ h.pitch.startup_name }}</td>
-                            <td class="px-4 py-3">{{ "${:,.0f}".format(h.amount_spent) if h.amount_spent > 0 else "-" }}</td>
-                            <td class="px-4 py-3">{{ "{:.1f}%".format(h.equity_gained) if h.equity_gained > 0 else "-" }}</td>
-                            <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-bold {% if h.result=='Won' %}bg-emerald-500/20 text-emerald-400{% elif h.result=='Rejected' %}bg-red-500/20 text-red-400{% else %}bg-slate-500/20 text-slate-400{% endif %}">{{ h.result }}</span></td>
-                        </tr>{% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <div id="no-pitch" class="bg-slate-900 rounded-2xl p-12 border border-slate-800 text-center"><h2 class="text-2xl font-bold text-slate-400">Waiting for pitch...</h2></div>
         </section>
     </main>
+
     <script>
-        const a=document.getElementById('amt'),e=document.getElementById('eq'),v=document.getElementById('val');
-        function cv(){const A=parseFloat(a.value)||0,E=parseFloat(e.value)||0;v.textContent=A>0&&E>0?'$'+(A/(E/100)).toLocaleString(undefined,{maximumFractionDigits:0}):'$0'}
-        a.addEventListener('input',cv);e.addEventListener('input',cv);
-        document.getElementById('offerForm').onsubmit=async ev=>{ev.preventDefault();const f=new FormData();f.append('amount',a.value);f.append('equity',e.value);f.append('partner_id',document.getElementById('partner').value);await fetch('/api/pirana/offer',{method:'POST',body:f});};
-        document.getElementById('wd').onclick=async()=>{if(confirm('Withdraw?')){await fetch('/api/pirana/withdraw',{method:'POST'});a.value='';e.value='';cv();}};
-        setInterval(async()=>{const r=await fetch('/api/pirana/data'),d=await r.json();document.getElementById('bal').textContent='$'+d.balance.toLocaleString();if(d.pitch){document.getElementById('startup').textContent=d.pitch.startup;document.getElementById('founder').textContent=d.pitch.founder;document.getElementById('ask').textContent='$'+d.pitch.amt.toLocaleString()+' for '+d.pitch.eq+'%';}},2000);
+        document.getElementById('offerForm').onsubmit=async ev=>{
+            ev.preventDefault();
+            const f=new FormData();
+            f.append('amount', document.getElementById('amt').value);
+            f.append('equity', document.getElementById('eq').value);
+            document.querySelectorAll('input[name="partners"]:checked').forEach(cb => f.append('partners', cb.value));
+            await fetch('/api/pirana/offer',{method:'POST',body:f});
+            ev.target.reset(); // clear form
+        };
+
+        async function respondMerge(id, action) { await fetch(`/api/pirana/merge_respond/${id}/${action}`, {method:'POST'}); }
+        async function withdrawSpecific(id) { if(confirm('Pull this specific offer off the table?')) await fetch(`/api/pirana/withdraw/${id}`, {method:'POST'}); }
+
+        setInterval(async()=>{
+            const r=await fetch('/api/pirana/data'), d=await r.json();
+            document.getElementById('bal').textContent='$'+d.balance.toLocaleString();
+
+            if(d.pitch){
+                document.getElementById('pitch-container').style.display = 'block';
+                document.getElementById('no-pitch').style.display = 'none';
+                document.getElementById('startup').textContent=d.pitch.startup;
+                document.getElementById('founder').textContent=d.pitch.founder;
+                document.getElementById('ask').textContent='$'+d.pitch.amt.toLocaleString()+' for '+d.pitch.eq+'%';
+
+                // Render pending invites
+                const invitesArea = document.getElementById('invites-area');
+                if (d.invites && d.invites.length > 0 && !d.concluded) {
+                    invitesArea.innerHTML = d.invites.map(inv => `
+                        <div class="bg-purple-900/40 border border-purple-500 rounded-2xl p-6 mb-6 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+                            <h3 class="font-bold text-purple-300 mb-2 uppercase tracking-widest text-sm">Merge Request</h3>
+                            <div class="text-xl mb-4"><b>${inv.creator}</b> invited you to join a group offer of <b class="text-emerald-400">$${inv.amt.toLocaleString()} for ${inv.eq}%</b> with: ${inv.names}.</div>
+                            <div class="flex gap-3">
+                                <button onclick="respondMerge(${inv.id}, 'accept')" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-6 rounded-lg transition">Accept Merge</button>
+                                <button onclick="respondMerge(${inv.id}, 'decline')" class="bg-slate-700 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition">Decline</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else { invitesArea.innerHTML = ''; }
+
+                // Render Active Offers
+                const myOffersArea = document.getElementById('my-offers');
+                if (d.my_offers && d.my_offers.length > 0) {
+                    myOffersArea.innerHTML = d.my_offers.map(mo => {
+                        let statusColor = mo.status === 'revise_requested' ? 'text-amber-400 animate-pulse' : (mo.status === 'rejected' ? 'text-red-500' : 'text-slate-400');
+                        let statusText = mo.status === 'revise_requested' ? 'CONTESTANT WANTS BETTER DEAL' : mo.status.toUpperCase();
+
+                        return `
+                        <div class="bg-slate-800 border border-slate-600 rounded-xl p-4 flex justify-between items-center ${mo.status==='rejected'?'opacity-50':''}">
+                            <div>
+                                <div class="font-bold text-lg">${mo.names}</div>
+                                <div class="text-blue-400 font-black">$${mo.amt.toLocaleString()} for ${mo.eq}%</div>
+                                <div class="text-xs font-black ${statusColor} mt-1">${statusText}</div>
+                            </div>
+                            ${mo.status !== 'rejected' && !d.concluded ? `<button onclick="withdrawSpecific(${mo.id})" class="bg-red-600 hover:bg-red-500 text-xs text-white font-bold py-2 px-4 rounded-lg">OUT</button>` : ''}
+                        </div>`
+                    }).join('');
+                } else { myOffersArea.innerHTML = '<div class="text-slate-500 text-sm">You have no active offers.</div>'; }
+
+                // Lock Form if Concluded
+                if (d.concluded) {
+                    document.getElementById('offerForm').style.display = 'none';
+                    invitesArea.innerHTML = '<div class="bg-blue-900/40 border border-blue-500 text-blue-300 p-4 rounded-xl mb-6 font-bold text-center">This pitch has concluded!</div>';
+                } else { document.getElementById('offerForm').style.display = 'block'; }
+
+            } else {
+                document.getElementById('pitch-container').style.display = 'none';
+                document.getElementById('no-pitch').style.display = 'block';
+                document.getElementById('invites-area').innerHTML = '';
+            }
+        }, 2000);
     </script>
 </body>
 </html>
